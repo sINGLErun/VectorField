@@ -1,108 +1,79 @@
 #include "VectorField.hpp"
 
-ScalarField::ScalarField() {
+// Component conctuctor & destructor ____________________________________________________
+
+void VectorField::Component::MemoryAllocator() {
+	projection = new float[that->SIZE_X * that->SIZE_Y * that->SIZE_Z];
 	#ifdef DEBUGGING
-		std::cout << "\t    ScalarField() [";
-		std::cout <<  SIZE_X << ", " << SIZE_Y << ", " << SIZE_Z << "]\n";
-	#endif
-	sField = new float[SIZE_X * SIZE_Y * SIZE_Z];
-	#ifdef DEBUGGING
-		std::cout << "\t\tmem. allocated: " << sField << "\n";
+		std::cout << "\t\t    mem. allocated: " << projection << "\n";
 	#endif
 }
 
-ScalarField::ScalarField(std::string FieldType) : ScalarField::ScalarField() {
-	if (FieldType == "zeroes") {
-		for (int i = 0; i < SIZE_X; ++i)
-			for(int j = 0; j < SIZE_Y; ++j)
-				for (int k = 0; k < SIZE_Z; ++k)
-					sField[i*SIZE_Y*SIZE_Z + j*SIZE_Z + k] = 0;	
-
-	} else if (FieldType == "random") {
-		for (int i = 0; i < SIZE_X; ++i)
-			for(int j = 0; j < SIZE_Y; ++j)
-				for (int k = 0; k < SIZE_Z; ++k)
-					sField[i*SIZE_Y*SIZE_Z + j*SIZE_Z + k] = 100 - rand() % 200 + 0.0001 * (rand() % 10000);	
-		
-	} else if (FieldType == "potential") {
-		for (int i = 0; i < SIZE_X; ++i)
-			for(int j = 0; j < SIZE_Y; ++j)
-				for (int k = 0; k < SIZE_Z; ++k)
-					sField[i*SIZE_Y*SIZE_Z + j*SIZE_Z + k] = 1;
-		
-	} else if (FieldType == "solenoidal") {}
+VectorField::Component::Component() {
+	that = nullptr;
+	projection = nullptr;
 }
 
-ScalarField::ScalarField(int X, int Y, int Z) {
-	SIZE_X = X;
-	SIZE_Y = Y;
-	SIZE_Z = Z;
+VectorField::Component::Component(VectorField *outer_this) {
+	that = outer_this;
+	MemoryAllocator();
 	#ifdef DEBUGGING
-		std::cout << "\t    ScalarField(int X, int Y, int Z) [";
-		std::cout <<  SIZE_X << ", " << SIZE_Y << ", " << SIZE_Z << "]\n";
-	#endif
-	sField = new float[SIZE_X * SIZE_Y * SIZE_Z];
-	#ifdef DEBUGGING
-		std::cout << "\t\t\tmem. allocated: " << sField << "\n";	
+		std::cout << "\t    VF::Comp_::Comp_(VF *outer_this) [";
+		std::cout <<  that->SIZE_X << ", " << that->SIZE_Y << ", " << that->SIZE_Z << "] {" << that << ", " << projection << "}\n";
 	#endif
 }
 
-ScalarField::ScalarField(int X, int Y, int Z, std::string FieldType) : ScalarField::ScalarField(X, Y, Z) {
-	if (FieldType == "zeroes") {
-		for (int i = 0; i < SIZE_X; ++i)
-			for(int j = 0; j < SIZE_Y; ++j)
-				for (int k = 0; k < SIZE_Z; ++k)
-					sField[i*SIZE_Y*SIZE_Z + j*SIZE_Z + k] = 0;	
-
-	} else if (FieldType == "random") {
-		for (int i = 0; i < SIZE_X; ++i)
-			for(int j = 0; j < SIZE_Y; ++j)
-				for (int k = 0; k < SIZE_Z; ++k)
-					sField[i*SIZE_Y*SIZE_Z + j*SIZE_Z + k] = 100 - rand() % 200 + 0.0001 * (rand() % 10000);	
-		
-	} else if (FieldType == "potential") {
-		for (int i = 0; i < SIZE_X; ++i)
-			for(int j = 0; j < SIZE_Y; ++j)
-				for (int k = 0; k < SIZE_Z; ++k)
-					sField[i*SIZE_Y*SIZE_Z + j*SIZE_Z + k] = 1;
-		
-	} else if (FieldType == "solenoidal") {}
-}
-
-ScalarField::ScalarField(const ScalarField &other) {
-	SIZE_X = other.SIZE_X;
-	SIZE_Y = other.SIZE_Y;
-	SIZE_Z = other.SIZE_Z;
-	#ifdef DEBUGGING
-		std::cout << "\t    ScalarField(const ScalarField &other) [";
-		std::cout <<  SIZE_X << ", " << SIZE_Y << ", " << SIZE_Z << "]\n";
-	#endif
-	sField = new float[SIZE_X * SIZE_Y * SIZE_Z];
-	#ifdef DEBUGGING
-		std::cout << "\t\t\tmem. allocated: " << sField << "\n";
-	#endif
-	for (int i = 0; i < SIZE_X; ++i)
-			for(int j = 0; j < SIZE_Y; ++j)
-				for (int k = 0; k < SIZE_Z; ++k)
-					sField[i*SIZE_Y*SIZE_Z + j*SIZE_Z + k] = other.sField[i*SIZE_Y*SIZE_Z + j*SIZE_Z + k];	
-}
-
-ScalarField::~ScalarField() {
-	if (sField != nullptr) {
-		#ifdef DEBUGGING
-			std::cout << "\t\tmem. deleted: " << sField << "\n";
-		#endif
-		delete [] sField;
-		sField = nullptr;
+VectorField::Component::Component(VectorField *outer_this, std::string FieldType)
+	: VectorField::Component(outer_this) {
+	for (int i = 0; i < that->SIZE_X; ++i)
+			for(int j = 0; j < that->SIZE_Y; ++j)
+				for (int k = 0; k < that->SIZE_Z; ++k) {
+					if (FieldType == "zeroes") {
+						projection[i*that->SIZE_Y*that->SIZE_Z + j*that->SIZE_Z + k] = 0;	
+					} else if (FieldType == "random") {
+						projection[i*that->SIZE_Y*that->SIZE_Z + j*that->SIZE_Z + k] = 100 - rand() % 200 + 0.0001 * (rand() % 10000);			
+					} else if (FieldType == "potential") {
+						projection[i*that->SIZE_Y*that->SIZE_Z + j*that->SIZE_Z + k] = 1;
+					} else if (FieldType == "solenoidal") {}
 	}
 }
 
+VectorField::Component::Component(const Component &other) {
+	#ifdef DEBUGGING
+		std::cout << "\t    VF::Comp_::Comp_(const Comp_ &other) [";
+		std::cout <<  that->SIZE_X << ", " << that->SIZE_Y << ", " << that->SIZE_Z << "] {" << that << ", " << projection << "}\n";
+	#endif
+
+	that = other.that;
+	that->SIZE_X = other.that->SIZE_X;
+	that->SIZE_Y = other.that->SIZE_Y;
+	that->SIZE_Z = other.that->SIZE_Z;
+	MemoryAllocator();
+
+	for (int i = 0; i < that->SIZE_X; ++i)
+			for(int j = 0; j < that->SIZE_Y; ++j)
+				for (int k = 0; k < that->SIZE_Z; ++k)
+					projection[i*that->SIZE_Y*that->SIZE_Z + j*that->SIZE_Z + k] = other.projection[i*that->SIZE_Y*that->SIZE_Z + j*that->SIZE_Z + k];
+}
+
+VectorField::Component::~Component() {
+	if (projection != nullptr) {
+		#ifdef DEBUGGING
+			std::cout << "\t\t    mem. deleted: " << projection << "\n\n";
+		#endif
+		delete [] projection;
+		projection = nullptr;
+	}
+}
+
+// VectorField conctuctor & destructor __________________________________________________
+
 VectorField::VectorField() {
 	#ifdef DEBUGGING
-		std::cout << "\n\tfrom VectorField()\n";
+		std::cout << "\n\tfrom VectorField()" << " {" << this << "}\n";
 	#endif
 	for (int r = 0; r < VectorDim; ++r) {
-		ScalarField r_temp;
+		Component r_temp(this);
 		Field[r] = r_temp;
 	}
 	#ifdef DEBUGGING
@@ -112,10 +83,10 @@ VectorField::VectorField() {
 
 VectorField::VectorField(std::string FieldType) {
 	#ifdef DEBUGGING
-		std::cout << "\n\tfrom VectorField(std::string FieldType)\n";
+		std::cout << "\n\tfrom VectorField(std::string)" << " {" << this << "}\n";
 	#endif
 	for (int r = 0; r < VectorDim; ++r) {
-		ScalarField r_temp(FieldType);
+		Component r_temp(this, FieldType);
 		Field[r] = r_temp;
 	}
 	#ifdef DEBUGGING
@@ -125,87 +96,86 @@ VectorField::VectorField(std::string FieldType) {
 
 VectorField::VectorField(int X, int Y, int Z) {
 	#ifdef DEBUGGING
-		std::cout << "\n\tfrom VectorField(int X, int Y, int Z)\n";
+		std::cout << "\n\tfrom VectorField(int, int, int)" << " {" << this << "}\n";
 	#endif
 	SIZE_X = X; SIZE_Y = Y; SIZE_Z = Z;
 	for (int r = 0; r < VectorDim; ++r) {
-		ScalarField r_temp(SIZE_X, SIZE_Y, SIZE_Z);
+		Component r_temp(this);
 		Field[r] = r_temp;
 	}
 	#ifdef DEBUGGING
-		std::cout << "\tend of VectorField(int X, int Y, int Z)\n";
+		std::cout << "\tend of VectorField(int, int, int)\n";
 	#endif
 }
 
 VectorField::VectorField(int X, int Y, int Z, std::string FieldType) {
 	#ifdef DEBUGGING
-		std::cout << "\n\tfrom VectorField(int X, int Y, int Z, std::string FieldType)\n";
+		std::cout << "\n\tfrom VectorField(int, int, int, std::string)" << " {" << this << "}\n";
 	#endif
 	SIZE_X = X; SIZE_Y = Y; SIZE_Z = Z;
 	for (int r = 0; r < VectorDim; ++r) {
-		ScalarField r_temp(SIZE_X, SIZE_Y, SIZE_Z, FieldType);
+		Component r_temp(this, FieldType);
 		Field[r] = r_temp;
 	}
 	#ifdef DEBUGGING
-		std::cout << "\tend of VectorField(int X, int Y, int Z, std::string FieldType)\n";
+		std::cout << "\tend of VectorField(int, int, int, std::string)\n";
 	#endif
 }
 
+VectorField::VectorField(const VectorField &other) {
+	#ifdef DEBUGGING
+		std::cout << " VF::VF(const VectorField &other)\n";
+	#endif
+	SIZE_X = other.SIZE_X; SIZE_Y = other.SIZE_Y; SIZE_Z = other.SIZE_Z;
+	for (int r = 0; r < VectorDim; ++r)
+		Field[r] = other.Field[r];
+}
+
 VectorField::~VectorField() {
-	std::cout << "\t~VectorField()\n";
+	#ifdef DEBUGGING
+		std::cout << "\t\t~VectorField()" << " {" << this << "}\n";
+	#endif
 }
 
-//VectorField grad(const VectorField &f, float dx, float dy, float dz) {
-//	VectorField temp_f(f.SIZE_X, f.SIZE_Y, f.SIZE_Z);
-//}	
+//_______________________________________________________________________________________
 
-//VectorField div(const VectorField &f, float dx, float dy, float dz) {
-//
-//}
-
-VectorField rot(const VectorField &f, float dx, float dy, float dz) {
-	VectorField rot_f(f.SIZE_X, f.SIZE_Y, f.SIZE_Z);
-	for (int i = 1; i < f.SIZE_X - 1; ++i)
-		for(int j = 1; j < f.SIZE_Y - 1; ++j)
-			for (int k = 1; k < f.SIZE_Z - 1; ++k) {
-				rot_f[0](i, j, k) = (f[2](i, j+1, k) - f[2](i, j, k))/dy - (f[1](i, j, k+1) - f[1](i, j, k))/dz;
-				rot_f[1](i, j, k) = (f[0](i, j, k+1) - f[0](i, j, k))/dz - (f[2](i+1, j, k) - f[2](i, j, k))/dx;
-				rot_f[1](i, j, k) = (f[1](i+1, j, k) - f[1](i, j, k))/dz - (f[0](i, j+1, k) - f[0](i, j, k))/dx;
-			}
-	return rot_f;
-}
-
-ScalarField& ScalarField::operator = (const ScalarField &other) {
-	std::cout << "\t\t    ScalarField& operator = (const ScalarField &other)\n";		
-	if (sField != nullptr) {
-		std::cout << "\t\t\tmem. deleted: " << sField << "\n";
-		delete [] sField;
-		sField = nullptr;
+VectorField::Component& VectorField::Component::operator = (const Component &other) {
+	#ifdef DEBUGGING
+		std::cout << "\t\tVF::Comp_& VF::Comp_::operator = (const Comp_ &other)\n";		
+	#endif
+	if (projection != nullptr) {
+		#ifdef DEBUGGING
+			std::cout << "\t\t\tmem. deleted: " << projection << "\n\n";
+		#endif
+		delete [] projection;
+		projection = nullptr;
 	} 
 
-	SIZE_X = other.SIZE_X;
-	SIZE_Y = other.SIZE_Y;
-	SIZE_Z = other.SIZE_Z;
-	sField = new float[SIZE_X * SIZE_Y * SIZE_Z];
-	std::cout << "\t\t\tmem. allocated: " << sField << "\n";
-	for (int i = 0; i < SIZE_X; ++i)
-			for(int j = 0; j < SIZE_Y; ++j)
-				for (int k = 0; k < SIZE_Z; ++k)
-					sField[i*SIZE_Y*SIZE_Z + j*SIZE_Z + k] = other.sField[i*SIZE_Y*SIZE_Z + j*SIZE_Z + k];
+	if (that == nullptr) { that = other.that; }	
+	that->SIZE_X = other.that->SIZE_X;
+	that->SIZE_Y = other.that->SIZE_Y;
+	that->SIZE_Z = other.that->SIZE_Z;
+	MemoryAllocator();
+	for (int i = 0; i < that->SIZE_X; ++i)
+		for(int j = 0; j < that->SIZE_Y; ++j)
+			for (int k = 0; k < that->SIZE_Z; ++k)
+				projection[i*that->SIZE_Y*that->SIZE_Z +
+						  j*that->SIZE_Z +
+						  k] = other.projection[i*that->SIZE_Y*that->SIZE_Z +
+											   j*that->SIZE_Z +
+											   k];
 	
 	return *this;
 }
 
-float& ScalarField::operator() (int X, int Y, int Z) {
-	return sField[X*SIZE_Y*SIZE_Z + Y*SIZE_Z + Z];
-}
-ScalarField& VectorField::operator[] (int r) { return Field[r]; } 
+float& VectorField::Component::operator() (int X, int Y, int Z) { 
+	return projection[X*that->SIZE_Y*that->SIZE_Z + Y*that->SIZE_Z + Z]; }
+VectorField::Component& VectorField::VectorField::operator[] (int r) { return Field[r]; } 
 
-// to work with const ScalarField %Name
-float ScalarField::operator() (int X, int Y, int Z) const {
-	return sField[X*SIZE_Y*SIZE_Z + Y*SIZE_Z + Z];
-}
-ScalarField VectorField::operator[] (int r) const { return Field[r]; }
+// to work with const Component %Name
+float VectorField::Component::operator() (int X, int Y, int Z) const {
+	return projection[X*that->SIZE_Y*that->SIZE_Z + Y*that->SIZE_Z + Z]; }
+VectorField::Component VectorField::VectorField::operator[] (int r) const { return Field[r]; }
 
 //БЛЯ, КАК КРАСИВО ЭТО РАБОТАЕТ
 void VectorField::PrintField(std::ostream &os) const {
@@ -219,22 +189,6 @@ void VectorField::PrintField(std::ostream &os) const {
 				<< " ("; for (int r = 0; r < VectorDim - 1; ++r)
 							os <<  std::setw(9) << Field[r](i, j, k) << ", ";
 							os <<  std::setw(9) << Field[VectorDim - 1](i, j, k) << ")";
-			}
-			os << "\n";
-		}
-		os << "\n";
-	}
-}
-
-void ScalarField::PrintField(std::ostream &os) const {
-	for (int i = 0; i < SIZE_X; ++i) {
-		os << " x:" << i << "\n"; 
-		for(int j = 0; j < SIZE_Y; ++j) {
-			os << " y:" << j;
-			for (int k = 0; k < SIZE_Z; ++k) {
-				os << " z:" << k;		
-				os << std::setprecision(4) << std::fixed 
-				<<  std::setw(9) << sField[i*SIZE_Y*SIZE_Z + j*SIZE_Z + k] << " ";
 			}
 			os << "\n";
 		}
